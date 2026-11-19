@@ -1,11 +1,28 @@
-# verificacion_encuesta.py — Auditoría de la encuesta (Python)
-# Completa los pasos marcados con TODO. Ejecuta desde la raíz del repositorio:
-#   python scripts/verificacion_encuesta.py
+import pandas as pd
 
-# TODO 1: carga plantillas/encuesta_respuestas.csv con pandas
-# TODO 2: imprime los tipos (dtypes) de cada columna
-# TODO 3: imprime el conteo de datos faltantes (NA) por columna
-# TODO 4: imprime la distribución de satisfaccion_general y de recomendaria
-#         (p. ej., value_counts)
-# TODO 5: escribe 2–3 líneas de interpretación (sección 7 de la plantilla):
-#         qué patrón delataría cada sesgo de recolección
+df = pd.read_csv("plantillas/encuesta_respuestas.csv")
+print(df["origen"].value_counts(), "\n")
+
+# tipos y datos faltantes de cada columna
+resumen = pd.DataFrame({"dtype": df.dtypes.astype(str), "faltantes": df.isna().sum()})
+print(resumen, "\n")
+
+# la interpretacion de sesgos se hace solo con las filas reales
+reales = df[df["origen"] == "real"]
+print("Filas reales:", len(reales), "\n")
+
+print("Distribucion de satisfaccion_general (reales):")
+print(reales["satisfaccion_general"].value_counts().sort_index(), "\n")
+print("Distribucion de recomendaria (reales):")
+print(reales["recomendaria"].value_counts(), "\n")
+# 45-59 y 50 o mas se solapan, se agrupan como 45 o mas
+edad = reales["rango_edad"].replace({"45-59": "45 o más", "50 o más": "45 o más"})
+print("Distribucion de rango_edad (reales):")
+print(edad.value_counts(), "\n")
+
+# regla de decision: >= 70 % satisfechos y >= 60 % usaria el programa
+satisf = (reales["satisfaccion_general"] >= 4).mean() * 100
+usaria = (reales["prob_uso_programa"] >= 4).mean() * 100
+print("Satisfechos (4-5 en P6) %:", round(satisf, 1))
+print("Usaria el programa (4-5 en P8) %:", round(usaria, 1))
+print("Se cumple la regla de decision:", satisf >= 70 and usaria >= 60)
